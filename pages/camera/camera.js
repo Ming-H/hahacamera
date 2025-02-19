@@ -3,7 +3,14 @@ Page({
         devicePosition: 'front',
         tempImagePath: '',
         currentFilter: 'normal',
-        filterTypes: ['normal', 'fat', 'thin', 'tall', 'short']
+        filterTypes: ['normal', 'fat', 'thin', 'tall', 'short'],
+        currentBgColor: 'none',
+        bgColors: [
+            { name: 'none', value: 'transparent', label: '关闭' },
+            { name: 'warm', value: 'rgba(255, 220, 180, 0.5)', label: '暖色' },
+            { name: 'cold', value: 'rgba(180, 220, 255, 0.5)', label: '冷色' },
+            { name: 'pink', value: 'rgba(255, 200, 220, 0.5)', label: '粉色' }
+        ]
     },
 
     onLoad() {
@@ -228,5 +235,23 @@ Page({
 
     error(e) {
         console.error(e.detail)
+    },
+
+    switchBgColor() {
+        const currentIndex = this.data.bgColors.findIndex(color => color.name === this.data.currentBgColor);
+        const nextIndex = (currentIndex + 1) % this.data.bgColors.length;
+        this.setData({
+            currentBgColor: this.data.bgColors[nextIndex].name
+        });
+    },
+
+    getCurrentBgColorValue() {
+        const color = this.data.bgColors.find(c => c.name === this.data.currentBgColor);
+        return color ? color.value : 'transparent';
+    },
+
+    getCurrentBgColorLabel() {
+        const color = this.data.bgColors.find(c => c.name === this.data.currentBgColor);
+        return color ? color.label : '关闭';
     }
 }) 

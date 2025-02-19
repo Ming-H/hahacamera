@@ -4,33 +4,49 @@
     flash="off" 
     binderror="error"
     style="width: 100%; height: 100%;">
-    
-    <cover-view class="controls">
-      <cover-view 
-        class="switch-camera" 
-        bindtap="switchCamera">
-        <cover-image 
-          class="icon"
-          src="/static/icons/switch.png">
-        </cover-image>
-      </cover-view>
-      
-      <cover-view 
-        class="take-photo" 
-        bindtap="takePhoto">
-        <cover-image 
-          class="icon"
-          src="/static/icons/camera.png">
-        </cover-image>
-      </cover-view>
-
-      <cover-view 
-        class="switch-filter" 
-        bindtap="switchFilter">
-        <cover-view class="filter-text">{{currentFilter}}</cover-view>
-      </cover-view>
-    </cover-view>
   </camera>
+
+  <!-- 将补光背景层移到相机外部 -->
+  <view class="light-bg" style="background-color: {{getCurrentBgColorValue()}}"></view>
+  
+  <!-- 顶部控制区 -->
+  <cover-view class="top-controls">
+    <cover-view 
+      class="switch-light" 
+      bindtap="switchBgColor">
+      <cover-view class="light-text">补光: {{getCurrentBgColorLabel()}}</cover-view>
+    </cover-view>
+
+    <cover-view 
+      class="switch-camera" 
+      bindtap="switchCamera">
+      <cover-image 
+        class="icon"
+        src="/static/icons/switch.png">
+      </cover-image>
+    </cover-view>
+  </cover-view>
+  
+  <!-- 底部控制区 -->
+  <cover-view class="controls">
+    <cover-view 
+      class="switch-filter" 
+      bindtap="switchFilter">
+      <cover-view class="filter-text">{{currentFilter}}</cover-view>
+    </cover-view>
+    
+    <cover-view 
+      class="take-photo" 
+      bindtap="takePhoto">
+      <cover-image 
+        class="icon"
+        src="/static/icons/camera.png">
+      </cover-image>
+    </cover-view>
+
+    <!-- 添加一个空的 cover-view 来保持对称 -->
+    <cover-view style="width: 120rpx;"></cover-view>
+  </cover-view>
 
   <canvas canvas-id="filterCanvas" style="width: 100%; height: 100%; position: fixed; left: -9999px;"></canvas>
 
