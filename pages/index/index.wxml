@@ -1,29 +1,68 @@
 <!--index.wxml-->
-<scroll-view class="scrollarea" scroll-y type="list">
-  <view class="container">
-    <view class="title">哈哈镜相机</view>
-    <button bindtap="goToCamera" type="primary">开始拍照</button>
-    <view class="userinfo">
-      <block wx:if="{{canIUseNicknameComp && !hasUserInfo}}">
+<view class="container">
+  <!-- 顶部品牌区域 -->
+  <view class="brand-container">
+    <view class="brand-logo"></view>
+    <view class="brand-title">哈哈镜相机</view>
+    <view class="brand-subtitle">捕捉有趣瞬间的新方式</view>
+  </view>
+  
+  <!-- 主要功能区 -->
+  <view class="action-container">
+    <button class="primary-button" hover-class="button-hover" bindtap="goToCamera">
+      <view class="button-inner">
+        <view class="button-icon"></view>
+        <text>开始拍照</text>
+      </view>
+    </button>
+  </view>
+  
+  <!-- 用户信息区 -->
+  <view class="profile-container {{hasUserInfo ? 'has-user' : ''}}">
+    <block wx:if="{{canIUseNicknameComp && !hasUserInfo}}">
+      <view class="avatar-section">
         <button class="avatar-wrapper" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
           <image class="avatar" src="{{userInfo.avatarUrl}}"></image>
+          <view class="avatar-overlay">
+            <view class="avatar-icon"></view>
+          </view>
         </button>
-        <view class="nickname-wrapper">
-          <text class="nickname-label">昵称</text>
-          <input type="nickname" class="nickname-input" placeholder="请输入昵称" bind:change="onInputChange" />
-        </view>
-      </block>
-      <block wx:elif="{{!hasUserInfo}}">
-        <button wx:if="{{canIUseGetUserProfile}}" bindtap="getUserProfile"> 获取头像昵称 </button>
-        <view wx:else> 请使用2.10.4及以上版本基础库 </view>
-      </block>
-      <block wx:else>
+        <text class="avatar-hint">设置头像</text>
+      </view>
+      
+      <view class="nickname-section">
+        <text class="nickname-label">你的昵称</text>
+        <input type="nickname" class="nickname-input" placeholder="请输入昵称" bind:change="onInputChange" />
+      </view>
+    </block>
+    
+    <block wx:elif="{{!hasUserInfo}}">
+      <button wx:if="{{canIUseGetUserProfile}}" 
+              class="profile-button"
+              hover-class="profile-button-hover" 
+              bindtap="getUserProfile">
+        <text>完善个人信息</text>
+      </button>
+      <view wx:else class="compatibility-notice"> 
+        请使用2.10.4及以上版本基础库 
+      </view>
+    </block>
+    
+    <block wx:else>
+      <view class="user-info-card">
         <image bindtap="bindViewTap" class="userinfo-avatar" src="{{userInfo.avatarUrl}}" mode="cover"></image>
-        <text class="userinfo-nickname">{{userInfo.nickName}}</text>
-      </block>
-    </view>
-    <view class="usermotto">
-      <text class="user-motto">{{motto}}</text>
-    </view>
+        <view class="user-info-details">
+          <text class="userinfo-nickname">{{userInfo.nickName}}</text>
+          <text class="user-info-hint">点击头像查看更多</text>
+        </view>
+      </view>
+    </block>
   </view>
-</scroll-view>
+  
+  <!-- 底部装饰元素 -->
+  <view class="footer-decoration">
+    <view class="decoration-element decoration-1"></view>
+    <view class="decoration-element decoration-2"></view>
+    <view class="decoration-element decoration-3"></view>
+  </view>
+</view>

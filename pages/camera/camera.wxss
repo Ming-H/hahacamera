@@ -1,7 +1,52 @@
-.container {
+/* 全局变量 */
+page {
+  --primary-color: #FF6B6B;
+  --secondary-color: #4ECDC4;
+  --accent-color: #FFE66D;
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --bg-dark: #2A2D34;
+  --bg-translucent: rgba(0, 0, 0, 0.5);
+  --bg-button: rgba(255, 255, 255, 0.25);
+  --bg-button-active: rgba(255, 255, 255, 0.4);
+  --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-strong: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --corner-radius-sm: 12rpx;
+  --corner-radius-md: 24rpx;
+  --corner-radius-lg: 32rpx;
+  --button-size-small: 80rpx;
+  --button-size-medium: 100rpx;
+  --button-size-large: 140rpx;
+  
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+/* 相机页面容器 */
+.camera-page {
   width: 100vw;
   height: 100vh;
   position: relative;
+  overflow: hidden;
+  background-color: #000;
+}
+
+/* 相机视图 */
+.camera-view {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+/* 预览画布 */
+.preview-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none;
 }
 
 /* 补光背景层 */
@@ -13,143 +58,414 @@
   height: 100%;
   z-index: 3;
   pointer-events: none;
-  background-blend-mode: soft-light;
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  transition: background-color 0.3s ease;
 }
 
-/* 相机层级 */
-camera {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  height: 100%;
-}
-
-/* 顶部控制区 */
-.top-controls {
+/* 顶部栏 */
+.top-bar {
   position: absolute;
-  top: 50rpx;
+  top: 0;
   left: 0;
   width: 100%;
-  padding: 0 50rpx;
-  box-sizing: border-box;
+  height: 180rpx;
   display: flex;
   justify-content: space-between;
-  z-index: 5;
+  align-items: flex-end;
+  padding: 0 30rpx 20rpx 30rpx;
+  box-sizing: border-box;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent);
+  z-index: 10;
+}
+
+.top-bar-left, .top-bar-right {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+}
+
+.top-bar-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 2rpx;
+  text-shadow: var(--shadow-subtle);
+}
+
+.btn-back {
+  width: var(--button-size-small);
+  height: var(--button-size-small);
+  border-radius: 50%;
+  background-color: var(--bg-button);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+
+.btn-light {
+  display: flex;
+  align-items: center;
+  height: var(--button-size-small);
+  border-radius: calc(var(--button-size-small) / 2);
+  background-color: var(--bg-button);
+  padding: 0 24rpx;
+  backdrop-filter: blur(10px);
+}
+
+.btn-icon {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.btn-label {
+  color: var(--text-primary);
+  font-size: 26rpx;
+  margin-left: 10rpx;
+}
+
+/* 侧边控制区 - 滤镜选择 */
+.side-controls {
+  position: absolute;
+  right: 30rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
+
+.side-btn-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 20rpx;
+}
+
+.side-btn {
+  width: 120rpx;
+  height: 70rpx;
+  background-color: var(--bg-button);
+  border-radius: var(--corner-radius-md);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  animation: slideInRight 0.5s ease forwards;
+  animation-delay: calc(var(--delay) * 0.1s);
+  opacity: 0;
+}
+
+.side-btn:nth-child(1) { --delay: 1; }
+.side-btn:nth-child(2) { --delay: 2; }
+.side-btn:nth-child(3) { --delay: 3; }
+.side-btn:nth-child(4) { --delay: 4; }
+.side-btn:nth-child(5) { --delay: 5; }
+
+.side-btn.active {
+  background-color: var(--primary-color);
+  width: 140rpx;
+  box-shadow: var(--shadow-strong);
+}
+
+.side-btn-label {
+  color: var(--text-primary);
+  font-size: 26rpx;
+  font-weight: 500;
 }
 
 /* 底部控制区 */
-.controls {
+.bottom-controls {
   position: absolute;
-  bottom: 50rpx;
+  bottom: 60rpx;
   left: 0;
   width: 100%;
-  padding: 0 50rpx;
+  padding: 0 40rpx;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+.bottom-btn-group {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.btn-switch-camera, .btn-gallery {
+  width: var(--button-size-medium);
+  height: var(--button-size-medium);
+  border-radius: 50%;
+  background-color: var(--bg-button);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+
+.btn-capture {
+  width: var(--button-size-large);
+  height: var(--button-size-large);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin: 0 40rpx;
+}
+
+.capture-outer {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 8rpx solid var(--text-primary);
   box-sizing: border-box;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  box-shadow: 0 0 0 4rpx rgba(0, 0, 0, 0.2);
+}
+
+.capture-inner {
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.8);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-capture:active .capture-inner {
+  transform: scale(0.9);
+  background-color: var(--primary-color);
+}
+
+/* 相机引导框 */
+.camera-guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600rpx;
+  height: 750rpx;
   z-index: 5;
+  pointer-events: none;
 }
 
-/* 补光控制按钮 */
-.switch-light {
-  width: 160rpx;
-  height: 60rpx;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 30rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.guide-corner {
+  position: absolute;
+  width: 40rpx;
+  height: 40rpx;
+  border-color: rgba(255, 255, 255, 0.8);
+  border-style: solid;
+  border-width: 0;
 }
 
-.light-text {
-  color: #000;
-  font-size: 24rpx;
-  white-space: nowrap;
+.top-left {
+  top: 0;
+  left: 0;
+  border-top-width: 4rpx;
+  border-left-width: 4rpx;
+  border-top-left-radius: 8rpx;
 }
 
-/* 相机切换按钮 */
-.switch-camera {
-  width: 80rpx;
-  height: 80rpx;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.top-right {
+  top: 0;
+  right: 0;
+  border-top-width: 4rpx;
+  border-right-width: 4rpx;
+  border-top-right-radius: 8rpx;
 }
 
-/* 拍照按钮 */
-.take-photo {
-  width: 120rpx;
-  height: 120rpx;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0 auto;
+.bottom-left {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 4rpx;
+  border-left-width: 4rpx;
+  border-bottom-left-radius: 8rpx;
 }
 
-/* 滤镜切换按钮 */
-.switch-filter {
-  width: 120rpx;
-  height: 60rpx;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 30rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.bottom-right {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 4rpx;
+  border-right-width: 4rpx;
+  border-bottom-right-radius: 8rpx;
 }
 
-.filter-text {
-  color: #000;
-  font-size: 24rpx;
-  text-transform: capitalize;
+.guide-text {
+  position: absolute;
+  bottom: -60rpx;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  color: var(--text-primary);
+  font-size: 26rpx;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
 }
 
-.icon {
-  width: 60%;
-  height: 60%;
-}
-
-/* 预览容器样式保持不变 */
+/* 照片预览层 */
 .preview-container {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: #000;
+  background-color: var(--bg-dark);
   z-index: 999;
   display: flex;
   flex-direction: column;
   align-items: center;
+  animation: fadeIn 0.3s ease;
 }
 
-.preview-container image {
+.preview-header {
   width: 100%;
-  height: 80%;
-  margin-top: 40rpx;
+  height: 120rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 30rpx;
+  box-sizing: border-box;
 }
 
-.preview-buttons {
+.preview-title {
+  color: var(--text-primary);
+  font-size: 34rpx;
+  font-weight: 600;
+}
+
+.close-preview {
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.close-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.preview-image {
+  width: 100%;
+  height: calc(100% - 260rpx);
+  object-fit: contain;
+}
+
+.preview-actions {
+  width: 100%;
+  height: 140rpx;
   display: flex;
   justify-content: space-around;
+  align-items: center;
+  padding: 0 40rpx;
+  box-sizing: border-box;
+}
+
+.action-btn {
+  width: 300rpx;
+  height: 88rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: var(--corner-radius-md);
+  font-size: 32rpx;
+  font-weight: 500;
+  color: white;
+  margin: 0;
+}
+
+.discard {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+}
+
+.save {
+  background-color: var(--primary-color);
+  box-shadow: 0 6rpx 16rpx rgba(255, 107, 107, 0.3);
+}
+
+/* 操作成功提示 */
+.toast-container {
+  position: absolute;
+  top: 50%;
+  left: 0;
   width: 100%;
-  padding: 20rpx;
+  display: flex;
+  justify-content: center;
+  z-index: 1000;
+  pointer-events: none;
 }
 
-.preview-buttons button {
-  margin: 0 20rpx;
+.toast {
+  padding: 20rpx 40rpx;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: var(--corner-radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  backdrop-filter: blur(10px);
+  animation: fadeInUp 0.3s ease, fadeOut 0.3s ease 2s forwards;
 }
 
-.weui-icon-refresh, .weui-icon-circle {
-  font-size: 48rpx;
-  color: #000;
+.toast-icon {
+  width: 60rpx;
+  height: 60rpx;
+  margin-bottom: 10rpx;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
-/* 控制按钮层级 */
-.top-controls, .controls {
-  z-index: 5;
+.toast-icon.success {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234ECDC4'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z'/%3E%3C/svg%3E");
+}
+
+.toast-icon.error {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FF6B6B'%3E%3Cpath d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z'/%3E%3C/svg%3E");
+}
+
+.toast-text {
+  color: var(--text-primary);
+  font-size: 28rpx;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(40rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 } 

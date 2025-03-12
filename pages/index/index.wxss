@@ -1,62 +1,363 @@
 /**index.wxss**/
 page {
+  --primary-color: #FF6B6B;
+  --secondary-color: #4ECDC4;
+  --accent-color: #FFE66D;
+  --text-primary: #2A2D34;
+  --text-secondary: #6C757D;
+  --background-light: #FFFFFF;
+  --background-dark: #F8F9FA;
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  --success-color: #67C23A;
+  
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: var(--text-primary);
+  background: linear-gradient(to bottom, #F8F9FA, #FFFFFF);
   height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-.scrollarea {
-  flex: 1;
-  overflow-y: hidden;
+  box-sizing: border-box;
 }
 
-.userinfo {
+/* 主容器 */
+.container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #aaa;
-  width: 80%;
+  justify-content: space-between;
+  padding: 30rpx;
+  height: 100%;
+  box-sizing: border-box;
+  position: relative;
 }
 
-.userinfo-avatar {
+/* 品牌区域 */
+.brand-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 60rpx;
+  width: 100%;
+  animation: fadeIn 0.8s ease-out;
+}
+
+.brand-logo {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 30rpx;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  margin-bottom: 30rpx;
+  box-shadow: 0 10rpx 20rpx var(--shadow-color);
+  position: relative;
   overflow: hidden;
-  width: 128rpx;
-  height: 128rpx;
-  margin: 20rpx;
-  border-radius: 50%;
 }
 
-.usermotto {
-  margin-top: 200px;
+.brand-logo:after {
+  content: '';
+  position: absolute;
+  width: 60rpx;
+  height: 60rpx;
+  background-color: rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  top: 20rpx;
+  left: 20rpx;
+}
+
+.brand-title {
+  font-size: 48rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  color: var(--text-primary);
+  margin-bottom: 16rpx;
+  position: relative;
+}
+
+.brand-subtitle {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  letter-spacing: 1rpx;
+  font-weight: 400;
+  margin-bottom: 40rpx;
+}
+
+/* 主要功能区 */
+.action-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 40rpx 0;
+}
+
+.primary-button {
+  width: 70%;
+  height: 100rpx;
+  background: linear-gradient(to right, var(--primary-color), #FF8B8B);
+  border-radius: 50rpx;
+  color: white;
+  font-size: 34rpx;
+  font-weight: 500;
+  letter-spacing: 2rpx;
+  box-shadow: 0 10rpx 30rpx rgba(255, 107, 107, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: none;
+}
+
+.button-hover {
+  transform: translateY(3rpx) scale(0.98);
+  box-shadow: 0 5rpx 15rpx rgba(255, 107, 107, 0.2);
+}
+
+.button-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 16rpx;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm-7 7H3v4c0 1.1.9 2 2 2h4v-2H5v-4zM5 5h4V3H5c-1.1 0-2 .9-2 2v4h2V5zm14-2h-4v2h4v4h2V5c0-1.1-.9-2-2-2zm0 16h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+/* 用户信息区 */
+.profile-container {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--background-light);
+  border-radius: 24rpx;
+  padding: 40rpx 30rpx;
+  box-shadow: 0 10rpx 30rpx var(--shadow-color);
+  margin-bottom: 60rpx;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.profile-container:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 10rpx;
+  background: linear-gradient(to right, var(--secondary-color), var(--primary-color));
+}
+
+.has-user {
+  border-left: 6rpx solid var(--success-color);
+}
+
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30rpx;
 }
 
 .avatar-wrapper {
   padding: 0;
-  width: 56px !important;
-  border-radius: 8px;
-  margin-top: 40px;
-  margin-bottom: 40px;
+  width: 140rpx !important;
+  height: 140rpx !important;
+  border-radius: 50%;
+  margin: 20rpx 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 6rpx 20rpx var(--shadow-color);
+  border: none;
 }
 
 .avatar {
   display: block;
-  width: 56px;
-  height: 56px;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
 }
 
-.nickname-wrapper {
+.avatar-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
   display: flex;
-  width: 100%;
-  padding: 16px;
-  box-sizing: border-box;
-  border-top: .5px solid rgba(0, 0, 0, 0.1);
-  border-bottom: .5px solid rgba(0, 0, 0, 0.1);
-  color: black;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.avatar-wrapper:active .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-icon {
+  width: 32rpx;
+  height: 32rpx;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.avatar-hint {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  margin-top: 10rpx;
+}
+
+.nickname-section {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  margin-top: 20rpx;
 }
 
 .nickname-label {
-  width: 105px;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  margin-bottom: 10rpx;
+  font-weight: 500;
 }
 
 .nickname-input {
-  flex: 1;
+  background-color: var(--background-dark);
+  border-radius: 12rpx;
+  height: 80rpx;
+  padding: 0 24rpx;
+  font-size: 30rpx;
+  color: var(--text-primary);
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+}
+
+.nickname-input:focus {
+  border-color: var(--secondary-color);
+  background-color: var(--background-light);
+}
+
+/* 用户信息卡片样式 */
+.user-info-card {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 20rpx 0;
+}
+
+.userinfo-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  margin-right: 30rpx;
+  border: 4rpx solid white;
+  box-shadow: 0 6rpx 16rpx var(--shadow-color);
+}
+
+.user-info-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.userinfo-nickname {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10rpx;
+}
+
+.user-info-hint {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+
+/* 其他用户信息按钮 */
+.profile-button {
+  width: 90%;
+  height: 80rpx;
+  border-radius: 40rpx;
+  background-color: var(--secondary-color);
+  color: white;
+  font-size: 30rpx;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6rpx 16rpx rgba(78, 205, 196, 0.3);
+  border: none;
+  transition: all 0.3s;
+}
+
+.profile-button-hover {
+  transform: translateY(3rpx);
+  box-shadow: 0 3rpx 8rpx rgba(78, 205, 196, 0.2);
+}
+
+.compatibility-notice {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  padding: 20rpx;
+  text-align: center;
+  background-color: rgba(255, 230, 109, 0.2);
+  border-radius: 12rpx;
+  margin-top: 20rpx;
+}
+
+/* 底部装饰元素 */
+.footer-decoration {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 120rpx;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.decoration-element {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.decoration-1 {
+  width: 200rpx;
+  height: 200rpx;
+  background-color: rgba(255, 107, 107, 0.1);
+  bottom: -120rpx;
+  left: -50rpx;
+}
+
+.decoration-2 {
+  width: 140rpx;
+  height: 140rpx;
+  background-color: rgba(78, 205, 196, 0.1);
+  bottom: -40rpx;
+  right: 60rpx;
+}
+
+.decoration-3 {
+  width: 80rpx;
+  height: 80rpx;
+  background-color: rgba(255, 230, 109, 0.15);
+  bottom: 20rpx;
+  right: 200rpx;
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
