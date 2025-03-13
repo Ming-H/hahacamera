@@ -26,7 +26,36 @@ App({
         console.error('wx.login 调用失败：', error);
       }
     });
+
+    // 处理日志文件访问错误
+    try {
+      const fs = wx.getFileSystemManager();
+      const logDir = wx.env.USER_DATA_PATH + '/logs';
+      try {
+        fs.accessSync(logDir);
+      } catch (e) {
+        // 目录不存在，创建目录
+        try {
+          fs.mkdirSync(logDir, true);
+        } catch (err) {
+          console.error('创建日志目录失败', err);
+        }
+      }
+    } catch (err) {
+      console.error('文件系统操作失败', err);
+    }
   },
+
+  // 处理backgroundFetch回调
+  onBackgroundFetchData(res) {
+    // 简单记录而不处理，避免错误
+    console.log('收到后台数据', res);
+    return {
+      errMsg: 'success',
+      fetchedData: {}
+    };
+  },
+
   globalData: {
     userInfo: null
   }

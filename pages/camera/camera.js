@@ -3,7 +3,6 @@ Page({
         devicePosition: 'front',
         tempImagePath: '',
         currentFilter: 'normal',
-        filterTypes: ['normal', 'fat', 'thin', 'tall', 'short'],
         currentBgColor: 'none',
         bgColors: [
             { name: 'none', value: 'transparent', label: '关闭' },
@@ -11,6 +10,8 @@ Page({
             { name: 'cold', value: 'rgba(180, 220, 255, 0.5)', label: '冷色' },
             { name: 'pink', value: 'rgba(255, 200, 220, 0.5)', label: '粉色' }
         ],
+        currentBgColorValue: 'transparent',
+        currentBgColorLabel: '关闭',
         showGuide: true,
         showToast: false,
         toastType: 'success',
@@ -18,10 +19,12 @@ Page({
         cameraContext: null,
         cameraListener: null,
         canvasWidth: 0,
-        canvasHeight: 0
+        canvasHeight: 0,
+        showLightSelector: false
     },
 
     onLoad() {
+        console.log('相机页面加载');
         // 显示相机引导框，3秒后自动隐藏
         setTimeout(() => {
             this.setData({
@@ -34,15 +37,25 @@ Page({
             cameraContext: wx.createCameraContext()
         });
 
-        // 检查相机权限
-        this.checkCameraAuth();
+        // 初始化补光颜色值和标签
+        const initialColor = this.data.currentBgColor;
+        const colorObj = this.data.bgColors.find(c => c.name === initialColor);
+        this.setData({
+            currentBgColorValue: this._getBgColorValue(initialColor),
+            currentBgColorLabel: colorObj ? colorObj.label : '关闭',
+            showLightSelector: false  // 确保不显示选择器
+        });
 
         // 获取设备信息以设置画布大小
         wx.getSystemInfo({
             success: (res) => {
+                console.log('获取设备信息成功，设置画布大小:', res.windowWidth, 'x', res.windowHeight);
                 this.setData({
                     canvasWidth: res.windowWidth,
                     canvasHeight: res.windowHeight
+                }, () => {
+                    // 确保设置完画布大小后再检查权限并启动预览
+                    this.checkCameraAuth();
                 });
             }
         });
@@ -51,6 +64,45 @@ Page({
         wx.setKeepScreenOn({
             keepScreenOn: true
         });
+    },
+
+    onShow() {
+        console.log('相机页面显示，当前滤镜:', this.data.currentFilter);
+        // 确保页面显示时应用补光效果
+        console.log('相机页面显示，当前补光设置：', this.data.currentBgColor);
+
+        // 如果显示该页面时没有预览，启动预览
+        if (this.data.currentFilter !== 'normal' && !this.previewInterval) {
+            console.log('页面显示时启动预览');
+            this.startPreview();
+        }
+
+        // 延迟一点时间执行，确保UI已完全加载
+        setTimeout(() => {
+            // 强制刷新补光效果
+            const currentColor = this.data.currentBgColor;
+            console.log('刷新补光效果，临时设置为none');
+            this.setData({
+                currentBgColor: 'none',
+                currentBgColorValue: 'transparent',
+                currentBgColorLabel: '关闭'
+            });
+            setTimeout(() => {
+                console.log('恢复补光效果为：', currentColor);
+                const colorObj = this.data.bgColors.find(c => c.name === currentColor);
+                this.setData({
+                    currentBgColor: currentColor,
+                    currentBgColorValue: this._getBgColorValue(currentColor),
+                    currentBgColorLabel: colorObj ? colorObj.label : '关闭'
+                });
+            }, 100);
+
+            // 如果有滤镜效果但没有预览显示，重新绘制一次
+            if (this.data.currentFilter !== 'normal' && !this.data.tempImagePath) {
+                console.log('页面显示时重新绘制滤镜');
+                this.drawFilterEffect();
+            }
+        }, 300);
     },
 
     onUnload() {
@@ -70,17 +122,40 @@ Page({
         });
     },
 
-    // 相机帧数据处理
-    onCameraFrame(frame) {
-        // 我们不再使用相机帧处理来应用滤镜，因为这会导致性能问题
-        // 保留此方法是为了保持与 camera 组件的 bindframe 属性的兼容性
+    // 统一应用补光效果的方法 - 在预览和照片处理中共用
+    applyLightingEffect(ctx, width, height, colorName) {
+        if (colorName === 'none') return;
+
+        // 获取补光颜色
+        const bgColor = this._getBgColorValue(colorName);
+
+        // 应用双层补光效果
+        ctx.save();
+
+        // 输出更详细的日志
+        console.log('应用补光 - 颜色名称:', colorName, '颜色值:', bgColor, '应用区域:', width, 'x', height);
+
+        // 第一层：Screen混合模式，使颜色更加明显
+        ctx.globalCompositeOperation = 'screen';
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, width, height);
+
+        // 第二层：Lighten混合模式，增加柔和的辉光效果
+        ctx.globalCompositeOperation = 'lighten';
+        const secondColor = bgColor.replace(/[\d.]+\)$/, '0.15)');
+        console.log('应用第二层补光 - 颜色值:', secondColor);
+        ctx.fillStyle = secondColor;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.restore();
+
+        console.log('已应用补光效果:', bgColor);
     },
 
-    // 绘制实时滤镜效果
+    // 绘制实时预览效果 - 只保留补光功能
     drawFilterEffect() {
-        if (this.data.currentFilter === 'normal') return;
-
         try {
+            console.log('绘制补光效果');
             const ctx = wx.createCanvasContext('previewCanvas', this);
             const { canvasWidth, canvasHeight } = this.data;
 
@@ -91,58 +166,36 @@ Page({
                         this.setData({
                             canvasWidth: res.windowWidth,
                             canvasHeight: res.windowHeight
+                        }, () => {
+                            // 设置完尺寸后立即重新尝试绘制
+                            setTimeout(() => this.drawFilterEffect(), 50);
                         });
                     }
                 });
                 return;
             }
 
+            // 清除整个画布
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-            // 优化：不再使用摄像头拍照而是直接在画布上应用变形
-            // 应用不同的变形效果
-            switch (this.data.currentFilter) {
-                case 'fat':
-                    ctx.save();
-                    ctx.scale(1.2, 1);
-                    ctx.setGlobalAlpha(0.7);
-                    ctx.setFillStyle('rgba(0,0,0,0.2)');
-                    ctx.fillRect(-canvasWidth * 0.1, 0, canvasWidth, canvasHeight);
-                    ctx.restore();
-                    break;
-                case 'thin':
-                    ctx.save();
-                    ctx.scale(0.8, 1);
-                    ctx.setGlobalAlpha(0.7);
-                    ctx.setFillStyle('rgba(0,0,0,0.2)');
-                    ctx.fillRect(canvasWidth * 0.1, 0, canvasWidth, canvasHeight);
-                    ctx.restore();
-                    break;
-                case 'tall':
-                    ctx.save();
-                    ctx.scale(1, 1.2);
-                    ctx.setGlobalAlpha(0.7);
-                    ctx.setFillStyle('rgba(0,0,0,0.2)');
-                    ctx.fillRect(0, -canvasHeight * 0.1, canvasWidth, canvasHeight);
-                    ctx.restore();
-                    break;
-                case 'short':
-                    ctx.save();
-                    ctx.scale(1, 0.8);
-                    ctx.setGlobalAlpha(0.7);
-                    ctx.setFillStyle('rgba(0,0,0,0.2)');
-                    ctx.fillRect(0, canvasHeight * 0.1, canvasWidth, canvasHeight);
-                    ctx.restore();
-                    break;
+            // 添加补光效果
+            if (this.data.currentBgColor !== 'none') {
+                // 使用统一的补光效果应用函数
+                this.applyLightingEffect(ctx, canvasWidth, canvasHeight, this.data.currentBgColor);
             }
-            ctx.draw();
+
+            // 绘制画布
+            ctx.draw(false, () => {
+                console.log('Canvas 绘制完成');
+            });
         } catch (error) {
-            console.error('绘制滤镜效果失败：', error);
+            console.error('绘制补光效果时出错：', error);
         }
     },
 
     // 开始实时预览
     startPreview() {
+        console.log('开始预览');
         // 若已经有listener，先停止
         if (this.data.cameraListener) {
             this.data.cameraListener.stop();
@@ -150,23 +203,20 @@ Page({
 
         // 清除现有的预览定时器
         if (this.previewInterval) {
+            console.log('清除旧的预览定时器');
             clearInterval(this.previewInterval);
         }
 
-        // 仅在需要滤镜时开启实时预览
-        if (this.data.currentFilter !== 'normal') {
-            // 立即绘制一次滤镜效果
-            this.drawFilterEffect();
+        // 立即绘制一次预览效果
+        this.drawFilterEffect();
 
-            // 使用较低频率的定时器来保持效果刷新，降低性能消耗
-            this.previewInterval = setInterval(() => {
-                if (this.data.currentFilter !== 'normal' && !this.data.tempImagePath) {
-                    this.drawFilterEffect();
-                } else {
-                    clearInterval(this.previewInterval);
-                }
-            }, 500);
-        }
+        console.log('启动预览定时器');
+        // 使用较高频率的定时器来保持效果刷新，提高实时性
+        this.previewInterval = setInterval(() => {
+            if (!this.data.tempImagePath) {
+                this.drawFilterEffect();
+            }
+        }, 100); // 保持100ms的刷新率
     },
 
     // 检查相机权限
@@ -178,7 +228,10 @@ Page({
                         scope: 'scope.camera',
                         success: () => {
                             console.log('相机授权成功');
-                            this.startPreview();
+                            // 授权成功立即启动预览
+                            setTimeout(() => {
+                                this.startPreview();
+                            }, 300); // 稍微延迟以确保相机组件已经准备好
                         },
                         fail: () => {
                             // 用户拒绝授权，引导打开设置页
@@ -195,7 +248,11 @@ Page({
                         }
                     });
                 } else {
-                    this.startPreview();
+                    console.log('相机已有授权，启动预览');
+                    // 已有授权，立即启动预览
+                    setTimeout(() => {
+                        this.startPreview();
+                    }, 300); // 稍微延迟以确保相机组件已经准备好
                 }
             }
         });
@@ -219,49 +276,13 @@ Page({
         }, 300);
     },
 
-    // 选择特定滤镜
-    selectFilter(e) {
-        const filter = e.currentTarget.dataset.filter;
-        this.setData({
-            currentFilter: filter
-        });
-
-        if (this.data.tempImagePath) {
-            this.applyFilter(this.data.tempImagePath);
-        } else {
-            // 清除现有的预览定时器
-            if (this.previewInterval) {
-                clearInterval(this.previewInterval);
-            }
-
-            // 重新启动预览以应用新滤镜
-            this.startPreview();
-
-            // 立即绘制一次效果
-            if (filter !== 'normal') {
-                setTimeout(() => {
-                    this.drawFilterEffect();
-                }, 100);
-            }
-        }
-
-        this.showToast('success', `已选择${this.getFilterName(filter)}滤镜`);
-    },
-
-    // 获取滤镜的中文名称
-    getFilterName(filter) {
-        const filterNames = {
-            'normal': '原图',
-            'fat': '胖胖',
-            'thin': '瘦瘦',
-            'tall': '高高',
-            'short': '矮矮'
-        };
-        return filterNames[filter] || filter;
-    },
-
     // 拍照
     takePhoto() {
+        // 记录拍照时的补光状态
+        console.log('拍照 - 当前补光状态:', this.data.currentBgColor,
+            '补光颜色值:', this._getBgColorValue(this.data.currentBgColor));
+
+        // 检查相机权限并拍照
         wx.getSetting({
             success: res => {
                 if (res.authSetting['scope.camera']) {
@@ -325,47 +346,43 @@ Page({
         })
     },
 
+    // 应用补光效果到图片
     applyFilter(imagePath) {
-        const that = this
+        console.log('应用补光效果到照片 - 当前补光状态:', this.data.currentBgColor,
+            '补光颜色值:', this._getBgColorValue(this.data.currentBgColor));
+
+        const that = this;
         wx.getImageInfo({
             src: imagePath,
             success: (imageInfo) => {
                 // 限制最大尺寸为512像素
-                let canvasWidth = imageInfo.width
-                let canvasHeight = imageInfo.height
-                const maxSize = 512
+                let canvasWidth = imageInfo.width;
+                let canvasHeight = imageInfo.height;
+                const maxSize = 512;
 
                 if (canvasWidth > maxSize || canvasHeight > maxSize) {
                     if (canvasWidth > canvasHeight) {
-                        canvasHeight = (canvasHeight * maxSize) / canvasWidth
-                        canvasWidth = maxSize
+                        canvasHeight = (canvasHeight * maxSize) / canvasWidth;
+                        canvasWidth = maxSize;
                     } else {
-                        canvasWidth = (canvasWidth * maxSize) / canvasHeight
-                        canvasHeight = maxSize
+                        canvasWidth = (canvasWidth * maxSize) / canvasHeight;
+                        canvasHeight = maxSize;
                     }
                 }
 
-                const ctx = wx.createCanvasContext('filterCanvas', this)
+                const ctx = wx.createCanvasContext('filterCanvas', this);
 
                 // 设置画布尺寸
-                ctx.width = canvasWidth
-                ctx.height = canvasHeight
+                ctx.width = canvasWidth;
+                ctx.height = canvasHeight;
 
-                switch (that.data.currentFilter) {
-                    case 'fat':
-                        this.applyFatEffect(ctx, imagePath, canvasWidth, canvasHeight)
-                        break
-                    case 'thin':
-                        this.applyThinEffect(ctx, imagePath, canvasWidth, canvasHeight)
-                        break
-                    case 'tall':
-                        this.applyTallEffect(ctx, imagePath, canvasWidth, canvasHeight)
-                        break
-                    case 'short':
-                        this.applyShortEffect(ctx, imagePath, canvasWidth, canvasHeight)
-                        break
-                    default:
-                        ctx.drawImage(imagePath, 0, 0, canvasWidth, canvasHeight)
+                // 先绘制原图
+                ctx.drawImage(imagePath, 0, 0, canvasWidth, canvasHeight);
+
+                // 应用补光效果
+                if (that.data.currentBgColor !== 'none') {
+                    // 使用统一的补光效果应用函数
+                    that.applyLightingEffect(ctx, canvasWidth, canvasHeight, that.data.currentBgColor);
                 }
 
                 ctx.draw(false, () => {
@@ -392,59 +409,16 @@ Page({
                                         tempImagePath: res.tempFilePath
                                     });
                                 }
-                            })
+                            });
                         },
                         fail: (error) => {
-                            console.error('滤镜应用失败：', error)
+                            console.error('补光应用失败：', error);
                             this.showToast('error', '处理失败');
                         }
-                    })
-                })
+                    });
+                });
             }
-        })
-    },
-
-    applyFatEffect(ctx, imagePath, width, height) {
-        ctx.save()
-        ctx.scale(1.2, 1)
-        ctx.drawImage(imagePath, -width * 0.1, 0, width, height)
-        ctx.restore()
-    },
-
-    applyThinEffect(ctx, imagePath, width, height) {
-        ctx.save()
-        ctx.scale(0.8, 1)
-        ctx.drawImage(imagePath, width * 0.1, 0, width, height)
-        ctx.restore()
-    },
-
-    applyTallEffect(ctx, imagePath, width, height) {
-        ctx.save()
-        ctx.scale(1, 1.2)
-        ctx.drawImage(imagePath, 0, -height * 0.1, width, height)
-        ctx.restore()
-    },
-
-    applyShortEffect(ctx, imagePath, width, height) {
-        ctx.save()
-        ctx.scale(1, 0.8)
-        ctx.drawImage(imagePath, 0, height * 0.1, width, height)
-        ctx.restore()
-    },
-
-    // 切换滤镜（旧方法，已被selectFilter替代）
-    switchFilter() {
-        const currentIndex = this.data.filterTypes.indexOf(this.data.currentFilter)
-        const nextIndex = (currentIndex + 1) % this.data.filterTypes.length
-        this.setData({
-            currentFilter: this.data.filterTypes[nextIndex]
         });
-
-        if (this.data.tempImagePath) {
-            this.applyFilter(this.data.tempImagePath)
-        } else {
-            this.startPreview();
-        }
     },
 
     // 切换补光颜色
@@ -454,30 +428,67 @@ Page({
         const newColor = this.data.bgColors[nextIndex];
 
         this.setData({
-            currentBgColor: newColor.name
+            currentBgColor: newColor.name,
+            currentBgColorValue: this._getBgColorValue(newColor.name),
+            currentBgColorLabel: newColor.label
         });
+
+        // 触发振动反馈
+        wx.vibrateShort({ type: 'light' });
 
         this.showToast('success', `补光: ${newColor.label}`);
     },
 
-    // 获取当前补光颜色值
-    getCurrentBgColorValue() {
-        const color = this.data.bgColors.find(c => c.name === this.data.currentBgColor);
+    // 获取当前补光颜色值（内部方法）
+    _getBgColorValue(colorName) {
+        const color = this.data.bgColors.find(c => c.name === colorName);
         if (!color) return 'transparent';
 
-        // 增强补光效果
-        if (color.name === 'none') return 'transparent';
-        if (color.name === 'warm') return 'rgba(255, 220, 180, 0.6)';
-        if (color.name === 'cold') return 'rgba(180, 220, 255, 0.6)';
-        if (color.name === 'pink') return 'rgba(255, 180, 220, 0.6)';
+        // 增强补光效果 - 使用不透明度更高和更饱和的颜色
+        if (colorName === 'none') return 'transparent';
+
+        // 使用与照片相同的补光颜色
+        if (colorName === 'warm') return 'rgba(255, 160, 50, 0.45)';
+        if (colorName === 'cold') return 'rgba(100, 180, 255, 0.45)';
+        if (colorName === 'pink') return 'rgba(255, 120, 180, 0.45)';
 
         return color.value;
     },
 
-    // 获取当前补光颜色标签
-    getCurrentBgColorLabel() {
-        const color = this.data.bgColors.find(c => c.name === this.data.currentBgColor);
-        return color ? color.label : '关闭';
+    // 获取照片专用的补光颜色值（更高饱和度和不透明度）
+    _getPhotoLightColor: function (colorName) {
+        // 直接使用_getBgColorValue确保一致性
+        return this._getBgColorValue(colorName);
+    },
+
+    // 选择补光颜色
+    selectBgColor(e) {
+        const color = e.currentTarget.dataset.color;
+
+        // 记录上一个颜色
+        const prevColor = this.data.currentBgColor;
+        console.log(`切换补光效果：${prevColor} -> ${color}`);
+
+        const colorObj = this.data.bgColors.find(c => c.name === color);
+
+        this.setData({
+            currentBgColor: color,
+            currentBgColorValue: this._getBgColorValue(color),
+            currentBgColorLabel: colorObj ? colorObj.label : '关闭',
+            showLightSelector: false
+        });
+
+        // 如果是从"无"切换到有颜色，或者反之，需要特殊处理
+        if ((prevColor === 'none' && color !== 'none') || (prevColor !== 'none' && color === 'none')) {
+            // 延迟一点点时间让UI更新
+            setTimeout(() => {
+                wx.vibrateShort({ type: 'light' });
+            }, 100);
+        }
+
+        if (colorObj) {
+            this.showToast('success', `补光: ${colorObj.label}`);
+        }
     },
 
     // 保存照片
@@ -548,5 +559,57 @@ Page({
             title: '相机出错了',
             icon: 'none'
         });
-    }
+    },
+
+    // 顶部按钮 - 切换补光颜色
+    toggleLightSelector() {
+        // 直接调用切换补光颜色的方法，而不是显示选择器
+        this.switchBgColor();
+    },
+
+    // 点击屏幕其他区域隐藏选择器
+    onTapScreen() {
+        if (this.data.showLightSelector) {
+            this.setData({
+                showLightSelector: false
+            });
+        }
+    },
+
+    // 阻止事件冒泡
+    stopPropagation() {
+        // 空函数，仅用于阻止事件冒泡
+    },
+
+    // 打开相册
+    openGallery() {
+        wx.chooseMedia({
+            count: 1,
+            mediaType: ['image'],
+            sourceType: ['album'],
+            success: (res) => {
+                if (res.tempFiles && res.tempFiles.length > 0) {
+                    const imagePath = res.tempFiles[0].tempFilePath;
+                    // 应用当前选择的滤镜效果
+                    this.applyFilter(imagePath);
+                }
+            },
+            fail: (err) => {
+                if (err.errMsg.indexOf('auth') >= 0) {
+                    wx.showModal({
+                        title: '需要授权',
+                        content: '访问相册需要获取相册权限',
+                        confirmText: '去设置',
+                        success: (res) => {
+                            if (res.confirm) {
+                                wx.openSetting();
+                            }
+                        }
+                    });
+                } else {
+                    this.showToast('error', '打开相册失败');
+                }
+            }
+        });
+    },
 }); 

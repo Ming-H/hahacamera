@@ -1,79 +1,85 @@
-<view class="camera-page">
+<view class="camera-page" catchtap="onTapScreen">
   <!-- 主相机视图 -->
   <camera 
     device-position="{{devicePosition}}" 
     flash="off" 
     binderror="error"
     class="camera-view"
-    frame-size="medium"
-    bindframe="onCameraFrame">
+    frame-size="medium">
   </camera>
 
-  <!-- 实时滤镜预览层 -->
-  <canvas wx:if="{{currentFilter !== 'normal'}}" canvas-id="previewCanvas" class="preview-canvas"></canvas>
+  <!-- 实时滤镜预览层 - 不再使用条件渲染，改为始终显示并通过样式控制可见性 -->
+  <canvas canvas-id="previewCanvas" class="preview-canvas" catchtap="takePhoto"></canvas>
 
   <!-- 补光背景层 -->
-  <view class="light-bg" style="background-color: {{getCurrentBgColorValue()}}"></view>
+  <view wx:if="{{currentBgColor !== 'none'}}" class="light-bg" style="background-color: {{currentBgColorValue}}"></view>
+  
+  <!-- 补光滤镜层 -->
+  <view wx:if="{{currentBgColor !== 'none'}}" class="light-filter {{currentBgColor}}-filter"></view>
   
   <!-- 顶部栏 -->
   <cover-view class="top-bar">
     <cover-view class="top-bar-left">
       <cover-view class="btn-back" bindtap="goBack">
-        <cover-image class="btn-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAB+ElEQVRoge2ZMU/bQBTH/+/ZRDaBhMrQITNErVS1Gyt+QreOHUAd2vyETh1L1S1zu3RM1Q1VoerWDFVFJFQJEg9ihCOFOpzbGKM4vDs753rA70uxfbr3+53vTiSGnDkDg2U2/3qj1/PGwJIhwRQBuiR1BLQkIkWShHSJI5Y0uZQnbZ5u/vx+cRh9PW9lhQGcvXj93HXdPQHPAJQtjHcA1KL92c3p0WXwu6kC9Yexd4JtRV5Z7FDOr39st10RKaWUYrldM5Yo8WpZvxDH75yiR6NJ16L8JfuBJqZ3/8ywfPcvQW1XkQcaV/JW9c3zxO0nTtqHK7VaMY7fCxh3tgRQ394Z37yS5ey4mJYdAAqXWpOvpdFNrjLlPo/4s0xg5CgxCEOxGnrDUOQEtMgJaJET0CInYGGOgABUE8IKSvzXIsLF0G5vDsv4E7NZTkCLnIAWuQNQ/1p8h4BdAQ9b8EZmWapKV52qj05dePEOHJZYvBoCnkxeLRvF5OSuGrVr/RAFEuT3xD0AYs+nD7+q+aGQmdORuxFmLVkP2YdpQwDaKNUyNu9xXAAhMVHg7U07A0EzXUNc6cKJDqxGhM42aSP9Uy+9i0UJLbhFD8NAvtTi/KW5v9Kw+gMANc/Pxx1e92GAKckVZ5ubVu2+g9mzswB8A8E7CyE5OcuCAAAAABJRU5ErkJggg=="></cover-image>
+        <cover-image class="btn-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 12H5'%3E%3C/path%3E%3Cpath d='M12 19l-7-7 7-7'%3E%3C/path%3E%3C/svg%3E"></cover-image>
       </cover-view>
     </cover-view>
     
-    <cover-view class="top-bar-title">哈哈镜</cover-view>
+    <cover-view class="top-bar-title">相机</cover-view>
     
     <cover-view class="top-bar-right">
       <cover-view 
-        class="btn-light" 
-        bindtap="switchBgColor">
-        <cover-image class="btn-icon" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACoklEQVRoge2ZsW/aQBiHn+8M+E8AqVJWSp26desWZciSMUvVMfkLuvQvSKesVdWtc7dmTNUla4ZUVaVKVdJIIDGYQ+lgyzmwS2wwvgvw/aY7832+733PnRFCwoSZB7T3P32qeUF4LeBQwi5AXZK6EupSSBFSl5SUpDEbiaIBK1HMTV1VVVfHrVar13lfpLJMIPT3D48cx/km4CvQyDHPPVDLlezPzn9+vU1+mEmgt//wQdv2kYDDnM1n8Y/ndp4kSlLK1GU5xHBJUNLwb968VgiU7wJNVN6KWRaW93vehRDCFkKIvOyNgzJNni0DAHzXPUj9PlXAa3uHrtt5U7TzACGrHd8/iD2mLojV1M5/fLbz/JcpC1sAVHi4b1X8xMRajn0diOWGX6YsYgGrVKZarYZACNRLXeP3MgGlzBHQKbHzGT9SBBDTF2KDiQQktqeZGlYnhBXKJGCkjl31kJ1WF/xI4yt9mSZgXx+qnzE/1LTsmEYU04hjPLdzZHJbCaH9mwTsdoWDPQG1nL0FEcesN3Pn9bpEKgXa3sSFyASMmliQVKI0AUeaWJDshNgEcWwCuhrYsAE4eXBTVrG9GThZ9tZjBdkUcWwCnSfAWDeK81H0E8dx/GxgbzO+1a1AV4DvT1huPuzbzUDPJ+i4k8WbSUCGE4m+1i1+M9ztSW4Gpq8jv/M06T10MYsZiZrdecDw/PpGd5KXeUG36JLRBPQJ6JkU2J1IwACagD4BXYDuJgUadkHdCPvfqYCpSZ1TA90jxI+pn2KMfdVz3a+C+JlwFjZ6JKuiR7KCHskS1+7zSJZEEn0UF/n9mWWHWzqx+D8wANzef7/t9YNjAYEU1Vr9oJl3rn9gwoQZ4A+DBRhzUVoK8QAAAABJRU5ErkJggg=="></cover-image>
-        <cover-view class="btn-label">{{getCurrentBgColorLabel()}}</cover-view>
+        class="btn-light"
+        bindtap="toggleLightSelector"
+        data-color="{{currentBgColor}}">
+        <cover-view class="color-left-area" style="background-color: {{currentBgColorValue}};"></cover-view>
+        <cover-image class="btn-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='5'%3E%3C/circle%3E%3Cline x1='12' y1='1' x2='12' y2='3'%3E%3C/line%3E%3Cline x1='12' y1='21' x2='12' y2='23'%3E%3C/line%3E%3Cline x1='4.22' y1='4.22' x2='5.64' y2='5.64'%3E%3C/line%3E%3Cline x1='18.36' y1='18.36' x2='19.78' y2='19.78'%3E%3C/line%3E%3Cline x1='1' y1='12' x2='3' y2='12'%3E%3C/line%3E%3Cline x1='21' y1='12' x2='23' y2='12'%3E%3C/line%3E%3Cline x1='4.22' y1='19.78' x2='5.64' y2='18.36'%3E%3C/line%3E%3Cline x1='18.36' y1='5.64' x2='19.78' y2='4.22'%3E%3C/line%3E%3C/svg%3E"></cover-image>
+        <cover-view class="btn-label">{{currentBgColorLabel}}</cover-view>
       </cover-view>
     </cover-view>
   </cover-view>
   
-  <!-- 侧边控制区 -->
-  <cover-view class="side-controls">
-    <cover-view class="side-btn-container">
+  <!-- 补光颜色选择器 - 当不需要时可以注释或删除此部分 -->
+  <!-- 
+  <cover-view class="light-selector" wx:if="{{showLightSelector}}">
+    <cover-view class="selector-title">选择补光效果</cover-view>
+    <cover-view class="color-options">
       <cover-view 
-        class="side-btn {{currentFilter === 'normal' ? 'active' : ''}}" 
-        data-filter="normal"
-        bindtap="selectFilter">
-        <cover-view class="side-btn-label">原图</cover-view>
+        class="color-option {{currentBgColor === 'none' ? 'active' : ''}}" 
+        data-color="none" 
+        bindtap="selectBgColor">
+        <cover-view class="color-preview none">
+          <cover-view class="off-icon"></cover-view>
+        </cover-view>
+        <cover-view class="color-name">关闭</cover-view>
       </cover-view>
       
       <cover-view 
-        class="side-btn {{currentFilter === 'fat' ? 'active' : ''}}" 
-        data-filter="fat"
-        bindtap="selectFilter">
-        <cover-view class="side-btn-label">胖胖</cover-view>
+        class="color-option {{currentBgColor === 'warm' ? 'active' : ''}}" 
+        data-color="warm" 
+        bindtap="selectBgColor">
+        <cover-view class="color-preview warm"></cover-view>
+        <cover-view class="color-name">暖色</cover-view>
       </cover-view>
       
       <cover-view 
-        class="side-btn {{currentFilter === 'thin' ? 'active' : ''}}" 
-        data-filter="thin"
-        bindtap="selectFilter">
-        <cover-view class="side-btn-label">瘦瘦</cover-view>
+        class="color-option {{currentBgColor === 'cold' ? 'active' : ''}}" 
+        data-color="cold" 
+        bindtap="selectBgColor">
+        <cover-view class="color-preview cold"></cover-view>
+        <cover-view class="color-name">冷色</cover-view>
       </cover-view>
       
       <cover-view 
-        class="side-btn {{currentFilter === 'tall' ? 'active' : ''}}" 
-        data-filter="tall"
-        bindtap="selectFilter">
-        <cover-view class="side-btn-label">高高</cover-view>
-      </cover-view>
-      
-      <cover-view 
-        class="side-btn {{currentFilter === 'short' ? 'active' : ''}}" 
-        data-filter="short"
-        bindtap="selectFilter">
-        <cover-view class="side-btn-label">矮矮</cover-view>
+        class="color-option {{currentBgColor === 'pink' ? 'active' : ''}}" 
+        data-color="pink" 
+        bindtap="selectBgColor">
+        <cover-view class="color-preview pink"></cover-view>
+        <cover-view class="color-name">粉色</cover-view>
       </cover-view>
     </cover-view>
   </cover-view>
+  -->
   
   <!-- 底部控制区 -->
   <cover-view class="bottom-controls">
@@ -83,8 +89,9 @@
         bindtap="switchCamera">
         <cover-image 
           class="btn-icon"
-          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAACTElEQVRoge2Zv2/TQBTHPy+xQ9KKIUOrMiDBUgYWGNggJAYGVn4BhY09A0IwI/EXICQGJFaYYAAxMDBCJRASVYW6NFG1IJAitQ2OY44B+Zrm7LMviU/xN/nu3ff53vPdnYSAe+MXLgDvgUtATY0OcAO4a8RdmxazdQ+4mTFf3A4IQzl0HpgCdIruAZPVuKLrYgA3NxfYxuHHkWhsNYuLawb2G/V66nqLHM8aNQCj3c5cX4XrVTi+yHEpAKWYjSzf8VnFddGARhQxs762UD2jMXrUaoVYuEZr28ddXbXeWj+OcxwzPl3UlWHF7ycA0NUVXO+IQaGW4xzHXOtNnrT8ydUr7oANQCVDgw1A0cV4HzjiGthLh74DaQB/LgSdA1YAS4DvjTYqwDDQqVxpTR/HA+Dv+yHPgacB9/R+CWwD+KKUzXGjFnA14Lz7sQRwNgqcjrMjJQKoZ5VoACe8jm4Be/YYcJTn99dZLCaASEVcQVXoA2BMKZ2aZ91OnQM3RsZU8/j/BMCqk5YJ1qNcx2UMOI+GgHk0BMwj3vUGO+QNANq+B91uYQDNbtc6HcB+LG8AAVVYG9ZGf7P96UuMl5H8qg0qQBgq2g1Pd32DKnxB8HRu2S6+CguE1vn+oApXQWgA5fpCjxYeHnMHbAAqCfotAEXPCqnJLGPfV9Wnuv6ubVFZ/66G/cJsXt2y2aeWUeWZJPCVXVRq/OTFYvZdOKp+TiSdN2Njqcf4GPBFA++MWLZp+Z8ZAJ4Dl6+0I+Az8AC4bMS9N6J+ATBrfqXPSjXVAAAAAElFTkSuQmCC"></cover-image>
-        </cover-view>
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M23 4v6h-6'%3E%3C/path%3E%3Cpath d='M1 20v-6h6'%3E%3C/path%3E%3Cpath d='M3.51 9a9 9 0 0 1 14.85-3.36L23 10'%3E%3C/path%3E%3Cpath d='M20.49 15a9 9 0 0 1-14.85 3.36L1 14'%3E%3C/path%3E%3C/svg%3E"></cover-image>
+        <cover-view class="btn-text">前后摄像头</cover-view>
+      </cover-view>
       
       <cover-view 
         class="btn-capture" 
@@ -94,10 +101,11 @@
         </cover-view>
       </cover-view>
       
-      <cover-view class="btn-gallery">
+      <cover-view class="btn-gallery" bindtap="openGallery">
         <cover-image 
           class="btn-icon"
-          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAACXBIWXMAAAsTAAALEwEAmpwYAAADcklEQVRoge2Zv2sbVxTHP/fNvDexwcLUtotxKBlKh9LS0qEQd8jSwR3SJf9AhnRNobRjxnRI/4HSsWMHp0P/gTo0S0tToiEQMBSEJVmyrPd+dEinWH7PlvTsyLIrv9N733vv3u8999x7bx6oUaNGjSckTAKuP/+6GcXxDQGHwGth3BbQBNYBBTYExUGIS0JCQAwyCHhIKmWADGPwkrS5dP94/LcUQTgJ4E8lS9O0L+GtgNeb2DtXzomSHO+OFkJ++v7u+4/Db6cG8OrFN991Ot1bAt5gZRl5e8c7XxKltDKlwbidRK8B6hXkS9/lmzBKb3t7P77wfS9ieMIBTJJw0O50b0PxnbcgSQJk6i/yjiKKdpYJAaB0VoGx4v0lmPRcGkXxOxFUeZkOcNLmXfH0wRHgchMdLWfyCsAPwxVA1gAWvQ+cGqHVVVzX5SWf4Cl3AGBVApYEcCz7l2iZAtQ1v1WAmpYaYBWgBjg3AsqsoI/lRz77ARK4fkwGqG8SuP4I6ANENUCdWgUWAbX46nqsAlcBZgvzBXRAnbFaBbgKwPxdw9kCajnvuTtAj6DWQl5/JBbqNbYCtUUMYnlBmGhT2YaA67gCiBPYc7EWAtPe9lHc47pnJU1Ay5mV5H4Yxul1USoT3QhU3vZpCo+PlfG9kWtGVhJJzxWgM5CJtV0VgOsGZImQxT13cQ2cA5A0jdj/9QFxHKPUKuN4HsOhTxJn1jYuPc/z2HphnaHvFzlzIlI7QKcjZoigtKK9E6OUYO0fvCp6nsfW9jaO4+QHlciFlQCQhRwRbGy0CYIAgDiJGQ776bW3kZURBd/3kWqcNqpWxjSLVE4B0GmC0SmDBKFarcbzz2dffMfzWIuinHZnm/ZMqDSOy1QbWwC9y5HW6TkzpXObfN2eRxCOvshxlGkOhBnGBaBTh+O+xvf3SEYHTKl83mYy/G0C0eHeww7NnFBR6lSZbVIdSs8AxXZJRwd0u3fQKXPv/LLOxJc5mHVunAJamfGbNE3o9/eJ1zvo7VC7W2UkS8/E5EV+/eZsuxX3/k/xB/Qf/0Xn0TCOY9IkJo77JL16Xg4T11r1gG/PCjC2e+sHrfYznyP8AaTzvE2vGWp8AZxWd+9/L+GnUfBJj9/k1tvAr9a09zcWB+5/v/fDx/GnNWrUqFFj6fgfZTGP3CU9J/oAAAAASUVORK5CYII="></cover-image>
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'%3E%3C/circle%3E%3Cpolyline points='21 15 16 10 5 21'%3E%3C/polyline%3E%3C/svg%3E"></cover-image>
+        <cover-view class="btn-text">相册</cover-view>
       </cover-view>
     </cover-view>
   </cover-view>

@@ -12,5 +12,16 @@
   "style": "v2",
   "componentFramework": "glass-easel",
   "sitemapLocation": "sitemap.json",
-  "lazyCodeLoading": "requiredComponents"
+  "lazyCodeLoading": "requiredComponents",
+  "permission": {
+    "scope.userLocation": {
+      "desc": "你的位置信息将用于记录拍照地点"
+    },
+    "scope.writePhotosAlbum": {
+      "desc": "保存照片需要访问你的相册"
+    },
+    "scope.camera": {
+      "desc": "使用相机功能拍摄照片"
+    }
+  }
 }
